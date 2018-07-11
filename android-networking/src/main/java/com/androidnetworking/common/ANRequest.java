@@ -19,6 +19,7 @@ package com.androidnetworking.common;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.androidnetworking.core.Core;
@@ -51,6 +52,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,6 +73,9 @@ import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okio.Buffer;
+import okio.BufferedSource;
 import okio.Okio;
 
 /**
@@ -139,6 +144,7 @@ public class ANRequest<T extends ANRequest> {
     private Executor mExecutor = null;
     private OkHttpClient mOkHttpClient = null;
     private String mUserAgent = null;
+    private boolean mLogResponseBody;
     private Type mType = null;
 
     public ANRequest(GetRequestBuilder builder) {
@@ -158,6 +164,7 @@ public class ANRequest<T extends ANRequest> {
         this.mExecutor = builder.mExecutor;
         this.mOkHttpClient = builder.mOkHttpClient;
         this.mUserAgent = builder.mUserAgent;
+        this.mLogResponseBody = builder.mLogResponseBody;
     }
 
     public ANRequest(PostRequestBuilder builder) {
@@ -182,6 +189,8 @@ public class ANRequest<T extends ANRequest> {
         if (builder.mCustomContentType != null) {
             this.customMediaType = MediaType.parse(builder.mCustomContentType);
         }
+        this.mLogResponseBody = builder.mLogResponseBody;
+
     }
 
     public ANRequest(DownloadBuilder builder) {
@@ -200,6 +209,8 @@ public class ANRequest<T extends ANRequest> {
         this.mExecutor = builder.mExecutor;
         this.mOkHttpClient = builder.mOkHttpClient;
         this.mUserAgent = builder.mUserAgent;
+        this.mLogResponseBody = builder.mLogResponseBody;
+
     }
 
     public ANRequest(MultiPartBuilder builder) {
@@ -220,7 +231,10 @@ public class ANRequest<T extends ANRequest> {
         this.mUserAgent = builder.mUserAgent;
         if (builder.mCustomContentType != null) {
             this.customMediaType = MediaType.parse(builder.mCustomContentType);
+
         }
+        this.mLogResponseBody = builder.mLogResponseBody;
+
     }
 
     public void getAsJSONObject(JSONObjectRequestListener requestListener) {
@@ -613,6 +627,21 @@ public class ANRequest<T extends ANRequest> {
     }
 
     public ANResponse parseResponse(Response response) {
+
+        if (mLogResponseBody) {
+            try {
+                ResponseBody responseBody = response.body();
+                BufferedSource source = responseBody.source();
+                source.request(Long.MAX_VALUE);
+                Buffer buffer = source.buffer();
+                String responseBodyString = buffer.clone().readUtf8();
+                Log.d(TAG, "ResponseBody: " + responseBodyString);
+            } catch (IOException e) {
+                return ANResponse.failed(Utils.getErrorForParse(new ANError(e)));
+            }
+        }
+
+
         switch (mResponseType) {
             case JSON_ARRAY:
                 try {
@@ -662,6 +691,7 @@ public class ANRequest<T extends ANRequest> {
         }
         return null;
     }
+
 
     public ANError parseNetworkError(ANError anError) {
         try {
@@ -938,6 +968,7 @@ public class ANRequest<T extends ANRequest> {
         private Executor mExecutor;
         private OkHttpClient mOkHttpClient;
         private String mUserAgent;
+        private boolean mLogResponseBody;
 
         public GetRequestBuilder(String url) {
             this.mUrl = url;
@@ -1099,6 +1130,12 @@ public class ANRequest<T extends ANRequest> {
             return (T) this;
         }
 
+        @Override
+        public T logResponseBody() {
+            mLogResponseBody = true;
+            return (T) this;
+        }
+
         public T setBitmapConfig(Bitmap.Config bitmapConfig) {
             mDecodeConfig = bitmapConfig;
             return (T) this;
@@ -1177,6 +1214,7 @@ public class ANRequest<T extends ANRequest> {
         private OkHttpClient mOkHttpClient;
         private String mUserAgent;
         private String mCustomContentType;
+        private boolean mLogResponseBody;
 
         public PostRequestBuilder(String url) {
             this.mUrl = url;
@@ -1338,6 +1376,13 @@ public class ANRequest<T extends ANRequest> {
             return (T) this;
         }
 
+        @Override
+        public T logResponseBody() {
+            mLogResponseBody = true;
+            return (T) this;
+        }
+
+
         public T addBodyParameter(String key, String value) {
             mBodyParameterMap.put(key, value);
             return (T) this;
@@ -1443,6 +1488,7 @@ public class ANRequest<T extends ANRequest> {
         private Executor mExecutor;
         private OkHttpClient mOkHttpClient;
         private String mUserAgent;
+        private boolean mLogResponseBody;
 
         public DownloadBuilder(String url, String dirPath, String fileName) {
             this.mUrl = url;
@@ -1600,6 +1646,13 @@ public class ANRequest<T extends ANRequest> {
             return (T) this;
         }
 
+        @Override
+        public T logResponseBody() {
+            mLogResponseBody = true;
+            return (T) this;
+        }
+
+
         public T setPercentageThresholdForCancelling(int percentageThresholdForCancelling) {
             mPercentageThresholdForCancelling = percentageThresholdForCancelling;
             return (T) this;
@@ -1626,6 +1679,7 @@ public class ANRequest<T extends ANRequest> {
         private OkHttpClient mOkHttpClient;
         private String mUserAgent;
         private String mCustomContentType;
+        private boolean mLogResponseBody;
 
         public MultiPartBuilder(String url) {
             this.mUrl = url;
@@ -1781,6 +1835,13 @@ public class ANRequest<T extends ANRequest> {
             return (T) this;
         }
 
+        @Override
+        public T logResponseBody() {
+            mLogResponseBody = true;
+            return (T) this;
+        }
+
+
         public T addMultipartParameter(String key, String value) {
             return addMultipartParameter(key, value, null);
         }
@@ -1902,6 +1963,7 @@ public class ANRequest<T extends ANRequest> {
         public ANRequest build() {
             return new ANRequest(this);
         }
+
     }
 
     @Override
