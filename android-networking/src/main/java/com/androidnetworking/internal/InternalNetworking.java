@@ -75,17 +75,26 @@ public final class InternalNetworking {
                 }
                 case POST: {
                     requestBody = request.getRequestBody();
-                    builder = builder.post(requestBody);
+                    if (request.getUploadProgressListener() != null)
+                        builder = builder.post(new RequestProgressBody(requestBody, request.getUploadProgressListener()));
+                    else
+                        builder = builder.post(requestBody);
                     break;
                 }
                 case PUT: {
                     requestBody = request.getRequestBody();
-                    builder = builder.put(requestBody);
+                    if (request.getUploadProgressListener() != null)
+                        builder = builder.put(new RequestProgressBody(requestBody, request.getUploadProgressListener()));
+                    else
+                        builder = builder.put(requestBody);
                     break;
                 }
                 case DELETE: {
                     requestBody = request.getRequestBody();
-                    builder = builder.delete(requestBody);
+                    if (request.getUploadProgressListener() != null)
+                        builder = builder.delete(new RequestProgressBody(requestBody, request.getUploadProgressListener()));
+                    else
+                        builder = builder.delete(requestBody);
                     break;
                 }
                 case HEAD: {
@@ -98,7 +107,10 @@ public final class InternalNetworking {
                 }
                 case PATCH: {
                     requestBody = request.getRequestBody();
-                    builder = builder.patch(requestBody);
+                    if (request.getUploadProgressListener() != null)
+                        builder = builder.patch(new RequestProgressBody(requestBody, request.getUploadProgressListener()));
+                    else
+                        builder = builder.patch(requestBody);
                     break;
                 }
             }
@@ -144,9 +156,10 @@ public final class InternalNetworking {
         return okHttpResponse;
     }
 
-    public static Response performDownloadRequest(final ANRequest request) throws ANError {
+    public static DownloadReturnValue performDownloadRequest(final ANRequest request) throws ANError {
         Request okHttpRequest;
         Response okHttpResponse;
+        String filePath;
         try {
             Request.Builder builder = new Request.Builder().url(request.getUrl());
             addHeadersToRequestBuilder(builder, request);
@@ -187,7 +200,8 @@ public final class InternalNetworking {
             final long startTime = System.currentTimeMillis();
             final long startBytes = TrafficStats.getTotalRxBytes();
             okHttpResponse = request.getCall().execute();
-            Utils.saveFile(okHttpResponse, request.getDirPath(), request.getFileName());
+            filePath = Utils.saveFile(okHttpResponse, request.getDirPath(), request.getFileName());
+
             final long timeTaken = System.currentTimeMillis() - startTime;
             if (okHttpResponse.cacheResponse() == null) {
                 final long finalBytes = TrafficStats.getTotalRxBytes();
@@ -214,7 +228,7 @@ public final class InternalNetworking {
             }
             throw new ANError(ioe);
         }
-        return okHttpResponse;
+        return new DownloadReturnValue(okHttpResponse, filePath);
     }
 
 

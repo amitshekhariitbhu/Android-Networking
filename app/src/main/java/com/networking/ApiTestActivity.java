@@ -369,7 +369,7 @@ public class ApiTestActivity extends AppCompatActivity {
                 })
                 .startDownload(new DownloadListener() {
                     @Override
-                    public void onDownloadComplete() {
+                    public void onDownloadComplete(Response response, String filePath) {
                         Log.d(TAG, "File download Completed");
                         Log.d(TAG, "onDownloadComplete isMainThread : " + String.valueOf(Looper.myLooper() == Looper.getMainLooper()));
                     }
@@ -409,7 +409,7 @@ public class ApiTestActivity extends AppCompatActivity {
                 })
                 .startDownload(new DownloadListener() {
                     @Override
-                    public void onDownloadComplete() {
+                    public void onDownloadComplete(Response response, String filePath) {
                         Log.d(TAG, "Image download Completed");
                         Log.d(TAG, "onDownloadComplete isMainThread : " + String.valueOf(Looper.myLooper() == Looper.getMainLooper()));
                     }
@@ -719,7 +719,7 @@ public class ApiTestActivity extends AppCompatActivity {
                 })
                 .startDownload(new DownloadListener() {
                     @Override
-                    public void onDownloadComplete() {
+                    public void onDownloadComplete(Response response, String filePath) {
                         Log.d(TAG, "File download Completed");
                         Log.d(TAG, "onDownloadComplete isMainThread : " + String.valueOf(Looper.myLooper() == Looper.getMainLooper()));
                     }
@@ -809,7 +809,7 @@ public class ApiTestActivity extends AppCompatActivity {
                 })
                 .startDownload(new DownloadListener() {
                     @Override
-                    public void onDownloadComplete() {
+                    public void onDownloadComplete(Response response, String filePath) {
                         Log.d(TAG, "File download Completed");
                         Log.d(TAG, "onDownloadComplete isMainThread : " + String.valueOf(Looper.myLooper() == Looper.getMainLooper()));
                     }
